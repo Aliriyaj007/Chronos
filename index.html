@@ -1,0 +1,2344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chronos | Password Strength Tester & Security Coach</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>">
+    <style>
+        /* ===== CSS RESET & BASE ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+        
+        :root {
+            /* Default theme (Nordic) */
+            --bg-primary: #2e3440;
+            --bg-surface: #3b4252;
+            --bg-elevated: #434c5e;
+            --bg-input: #4c566a;
+            --text-primary: #eceff4;
+            --text-secondary: #d8dee9;
+            --text-muted: #81a1c1;
+            --accent-primary: #88c0d0;
+            --accent-secondary: #5e81ac;
+            --success: #a3be8c;
+            --warning: #ebcb8b;
+            --danger: #bf616a;
+            --border-radius: 12px;
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+            padding: 20px;
+            transition: var(--transition);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        /* ===== TYPOGRAPHY ===== */
+        h1, h2, h3, h4 {
+            font-weight: 500;
+            line-height: 1.3;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: inline-block;
+        }
+        
+        h2 {
+            font-size: 1.5rem;
+            margin: 1.5rem 0 1rem;
+            color: var(--accent-primary);
+        }
+        
+        h3 {
+            font-size: 1.1rem;
+            margin: 1rem 0 0.5rem;
+            color: var(--text-secondary);
+        }
+        
+        p {
+            margin-bottom: 1rem;
+        }
+        
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+        }
+        
+        /* ===== LAYOUT COMPONENTS ===== */
+        .card {
+            background: var(--bg-surface);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: var(--transition);
+        }
+        
+        .flex {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+        
+        .grid-2 {
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        }
+        
+        .section {
+            margin-bottom: 2.5rem;
+        }
+        
+        /* ===== INPUT & CONTROLS ===== */
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .password-input-wrapper {
+            position: relative;
+            margin-bottom: 1rem;
+        }
+        
+        #passwordInput {
+            width: 100%;
+            padding: 1rem 1.25rem;
+            font-size: 1.1rem;
+            background: var(--bg-input);
+            border: 2px solid transparent;
+            border-radius: var(--border-radius);
+            color: var(--text-primary);
+            transition: var(--transition);
+            letter-spacing: 0.5px;
+        }
+        
+        #passwordInput:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(136, 192, 208, 0.2);
+        }
+        
+        .toggle-visibility {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 6px;
+            transition: var(--transition);
+        }
+        
+        .toggle-visibility:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--accent-primary);
+        }
+        
+        button {
+            padding: 0.75rem 1.5rem;
+            background: var(--accent-primary);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(136, 192, 208, 0.3);
+        }
+        
+        button.secondary {
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+        }
+        
+        button.danger {
+            background: var(--danger);
+        }
+        
+        /* ===== STRENGTH METER ===== */
+        .strength-meter {
+            height: 12px;
+            background: var(--bg-input);
+            border-radius: 6px;
+            margin: 1.5rem 0;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .strength-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 6px;
+            transition: var(--transition);
+            background: linear-gradient(90deg, var(--danger), var(--warning), var(--success));
+            position: relative;
+        }
+        
+        .strength-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                rgba(255, 255, 255, 0.2) 50%, 
+                transparent 100%);
+            animation: shine 3s infinite linear;
+        }
+        
+        @keyframes shine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .strength-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0.5rem;
+        }
+        
+        .strength-text {
+            font-weight: 600;
+            font-size: 1.2rem;
+            transition: var(--transition);
+        }
+        
+        .entropy-badge {
+            background: var(--bg-elevated);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+        
+        /* ===== CRACK TIME DISPLAY ===== */
+        .crack-time-display {
+            text-align: center;
+            padding: 1.5rem;
+            background: var(--bg-elevated);
+            border-radius: var(--border-radius);
+            margin: 1.5rem 0;
+            border-left: 4px solid var(--accent-primary);
+        }
+        
+        .crack-time {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0.5rem 0;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .crack-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* ===== PASSWORD ANATOMY ===== */
+        .anatomy-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .anatomy-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--bg-elevated);
+            border-radius: 8px;
+        }
+        
+        .checkmark {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .checkmark.success {
+            background: var(--success);
+            color: var(--bg-primary);
+        }
+        
+        .checkmark.warning {
+            background: var(--warning);
+            color: var(--bg-primary);
+        }
+        
+        .checkmark.danger {
+            background: var(--danger);
+            color: var(--bg-primary);
+        }
+        
+        .pattern-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .pattern-tag {
+            padding: 0.25rem 0.75rem;
+            background: var(--danger);
+            border-radius: 12px;
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+        
+        /* ===== SUGGESTION PANEL ===== */
+        .suggestion-card {
+            background: var(--bg-elevated);
+            border: 2px dashed var(--accent-secondary);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        
+        .suggestion-text {
+            font-family: 'Courier New', monospace;
+            font-size: 1.3rem;
+            color: var(--accent-primary);
+            word-break: break-all;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            margin: 1rem 0;
+            line-height: 1.8;
+        }
+        
+        .suggestion-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        /* ===== VISUAL HASH DEMO ===== */
+        .hash-visualization {
+            width: 100%;
+            height: 120px;
+            background: var(--bg-input);
+            border-radius: var(--border-radius);
+            margin: 1rem 0;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .hash-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(20px);
+            opacity: 0.7;
+            transition: all 0.5s ease;
+        }
+        
+        /* ===== THEME SYSTEM ===== */
+        .theme-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 0.75rem;
+            margin: 1rem 0;
+        }
+        
+        .theme-option {
+            padding: 0.75rem;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: var(--transition);
+        }
+        
+        .theme-option:hover {
+            transform: translateY(-2px);
+        }
+        
+        .theme-option.active {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 2px rgba(136, 192, 208, 0.3);
+        }
+        
+        .theme-preview {
+            width: 100%;
+            height: 60px;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* ===== SETTINGS PANEL ===== */
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+        
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .slider {
+            width: 60px;
+            height: 28px;
+            background: var(--bg-input);
+            border-radius: 14px;
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .slider::before {
+            content: '';
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background: var(--accent-primary);
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: var(--transition);
+        }
+        
+        .slider.active::before {
+            transform: translateX(32px);
+        }
+        
+        select {
+            padding: 0.5rem;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            min-width: 120px;
+        }
+        
+        /* ===== TABS & NAVIGATION ===== */
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .tab {
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: 8px 8px 0 0;
+            transition: var(--transition);
+            position: relative;
+        }
+        
+        .tab:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .tab.active {
+            color: var(--accent-primary);
+            background: var(--bg-surface);
+        }
+        
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--accent-primary);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* ===== UTILITY CLASSES ===== */
+        .hidden {
+            display: none !important;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .mt-2 { margin-top: 2rem; }
+        .mb-2 { margin-bottom: 2rem; }
+        .my-2 { margin: 2rem 0; }
+        
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: var(--accent-secondary);
+            color: white;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+        
+        /* ===== RESPONSIVE DESIGN ===== */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 10px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+            
+            .anatomy-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .theme-selector {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .tabs {
+                overflow-x: auto;
+                flex-wrap: nowrap;
+            }
+            
+            .tab {
+                white-space: nowrap;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            .card {
+                padding: 1rem;
+            }
+            
+            .crack-time {
+                font-size: 2rem;
+            }
+            
+            .theme-selector {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="section">
+            <div class="flex" style="justify-content: space-between; align-items: center;">
+                <div>
+                    <h1>🛡️ Chronos</h1>
+                    <p class="subtitle">Password Strength Tester & Security Coach</p>
+                </div>
+                <div class="flex">
+                    <button id="exportBtn" title="Export Settings">💾 Export</button>
+                    <button id="importBtn" title="Import Settings">📥 Import</button>
+                    <button id="resetBtn" title="Reset to Defaults" class="secondary">🔄 Reset</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Navigation Tabs -->
+        <nav class="tabs">
+            <button class="tab active" data-tab="tester">Password Tester</button>
+            <button class="tab" data-tab="challenge">Strength Challenge</button>
+            <button class="tab" data-tab="settings">Settings & Themes</button>
+            <button class="tab" data-tab="guide">User Guide</button>
+            <button class="tab" data-tab="about">About & Credits</button>
+        </nav>
+
+        <!-- Main Content -->
+        <main>
+            <!-- Password Tester Tab -->
+            <section id="tester" class="tab-content active">
+                <div class="grid grid-2">
+                    <!-- Left Column -->
+                    <div>
+                        <div class="card">
+                            <h2>Test Your Password</h2>
+                            <p>Type your password to see real-time strength analysis and get smarter alternatives.</p>
+                            
+                            <div class="password-input-wrapper">
+                                <input type="password" id="passwordInput" placeholder="Enter a password to test...">
+                                <button class="toggle-visibility" id="toggleVisibility">👁️</button>
+                            </div>
+                            
+                            <div class="input-group">
+                                <label for="wordCount">Passphrase Words:</label>
+                                <select id="wordCount">
+                                    <option value="3">3 words</option>
+                                    <option value="4" selected>4 words</option>
+                                    <option value="5">5 words</option>
+                                    <option value="6">6 words</option>
+                                </select>
+                                
+                                <label for="separator" style="margin-left: 1rem;">Separator:</label>
+                                <select id="separator">
+                                    <option value="-">Hyphen (-)</option>
+                                    <option value=".">Period (.)</option>
+                                    <option value=" ">Space</option>
+                                    <option value="_">Underscore (_)</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Strength Meter -->
+                            <div class="strength-meter">
+                                <div class="strength-fill" id="strengthFill"></div>
+                            </div>
+                            <div class="strength-label">
+                                <span class="strength-text" id="strengthText">Very Weak</span>
+                                <span class="entropy-badge" id="entropyBadge">0 bits</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Crack Time -->
+                        <div class="card">
+                            <h2>Time to Crack</h2>
+                            <div class="crack-time-display">
+                                <div class="crack-icon" id="crackIcon">⚡</div>
+                                <div class="crack-time" id="crackTime">Instantly</div>
+                                <p>On a standard desktop computer</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Password Anatomy -->
+                        <div class="card">
+                            <h2>Password Anatomy</h2>
+                            <div class="anatomy-grid" id="anatomyGrid">
+                                <!-- Filled by JavaScript -->
+                            </div>
+                            <div class="pattern-tags" id="patternTags">
+                                <!-- Filled by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Column -->
+                    <div>
+                        <!-- Suggestion Panel -->
+                        <div class="card">
+                            <h2>📝 Memorable Alternative</h2>
+                            <p>For similar or better strength, try this Diceware passphrase:</p>
+                            
+                            <div class="suggestion-card">
+                                <div class="suggestion-text" id="suggestionText">
+                                    crystal-accordion-bracket-umpire
+                                </div>
+                                <div class="suggestion-actions">
+                                    <button id="useSuggestionBtn">✨ Use This Idea</button>
+                                    <button id="newSuggestionBtn" class="secondary">⟳ Generate New</button>
+                                </div>
+                            </div>
+                            
+                            <p style="font-size: 0.9rem; color: var(--text-muted);">
+                                <strong>Why this works:</strong> Random words are easy to remember but hard to guess.
+                                Each word adds ~12.9 bits of entropy.
+                            </p>
+                        </div>
+                        
+                        <!-- Hash Visualization -->
+                        <div class="card">
+                            <h2>🔍 Visual Hash Demo</h2>
+                            <p>See how changing even one character completely scrambles the output:</p>
+                            <div class="hash-visualization" id="hashVisualization">
+                                <!-- Hash blobs will be generated by JS -->
+                            </div>
+                            <p style="font-size: 0.9rem; color: var(--text-muted);">
+                                This visual representation shows how hash functions work conceptually.
+                                Each unique input creates a completely different pattern.
+                            </p>
+                        </div>
+                        
+                        <!-- Recipe Export -->
+                        <div class="card">
+                            <h2>📋 Password Recipe</h2>
+                            <p>Safe to share - describes the method without revealing your password:</p>
+                            <div class="suggestion-text" id="recipeText" style="font-size: 1rem;">
+                                No password analyzed yet
+                            </div>
+                            <button id="copyRecipeBtn" class="secondary" style="margin-top: 1rem;">📋 Copy Recipe</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Strength Challenge Tab -->
+            <section id="challenge" class="tab-content">
+                <div class="card">
+                    <h2>🎯 Strength Challenge</h2>
+                    <p>Complete this guided tutorial to learn how to create strong passwords.</p>
+                    
+                    <div id="challengeSteps">
+                        <!-- Steps will be generated by JavaScript -->
+                    </div>
+                    
+                    <div id="challengeProgress" style="margin: 2rem 0;">
+                        <div style="background: var(--bg-input); height: 6px; border-radius: 3px;">
+                            <div id="progressBar" style="width: 0%; height: 100%; background: var(--accent-primary); border-radius: 3px; transition: width 0.3s;"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-top: 0.5rem;">
+                            <span id="progressText">Progress: 0/5</span>
+                            <button id="resetChallengeBtn" class="secondary">Restart Challenge</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Settings & Themes Tab -->
+            <section id="settings" class="tab-content">
+                <div class="grid grid-2">
+                    <!-- Theme Selector -->
+                    <div class="card">
+                        <h2>🎨 Theme System</h2>
+                        <p>Choose from 7 premium color themes:</p>
+                        
+                        <div class="theme-selector" id="themeSelector">
+                            <!-- Themes will be generated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <!-- Customization Settings -->
+                    <div class="card">
+                        <h2>⚙️ Customization</h2>
+                        <div class="settings-grid">
+                            <div class="setting-item">
+                                <span>Show pattern warnings</span>
+                                <div class="slider active" id="togglePatterns"></div>
+                            </div>
+                            <div class="setting-item">
+                                <span>Animate strength meter</span>
+                                <div class="slider active" id="toggleAnimations"></div>
+                            </div>
+                            <div class="setting-item">
+                                <span>Auto-generate suggestions</span>
+                                <div class="slider active" id="toggleAutoSuggest"></div>
+                            </div>
+                            <div class="setting-item">
+                                <span>Show hash visualization</span>
+                                <div class="slider active" id="toggleHashVisual"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="my-2">
+                            <label for="crackTimePreset">Crack Time Preset:</label>
+                            <select id="crackTimePreset">
+                                <option value="desktop">Standard Desktop</option>
+                                <option value="gpu">High-end GPU</option>
+                                <option value="cluster">Hacking Cluster</option>
+                            </select>
+                        </div>
+                        
+                        <button id="saveSettingsBtn" class="mt-2">💾 Save Settings</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- User Guide Tab -->
+            <section id="guide" class="tab-content">
+                <div class="card">
+                    <h2>📖 User Guide</h2>
+                    
+                    <h3>What is Chronos?</h3>
+                    <p>Chronos is a client-side password strength tester that helps you create secure, memorable passwords using the Diceware method. Everything runs locally in your browser - no data is ever sent to servers.</p>
+                    
+                    <h3>How to Use the Password Tester</h3>
+                    <ol style="margin-left: 1.5rem; margin-bottom: 1rem;">
+                        <li><strong>Type a password</strong> in the input field to see real-time analysis</li>
+                        <li><strong>Check the strength meter</strong> - green means strong, red means weak</li>
+                        <li><strong>Review the crack time estimate</strong> - see how long it would take to break your password</li>
+                        <li><strong>Examine the password anatomy</strong> - understand what makes your password strong or weak</li>
+                        <li><strong>Try the suggested passphrase</strong> - click "Use This Idea" to test a strong, memorable alternative</li>
+                    </ol>
+                    
+                    <h3>Understanding the Metrics</h3>
+                    <ul style="margin-left: 1.5rem; margin-bottom: 1rem;">
+                        <li><strong>Entropy (bits):</strong> Measures randomness. Higher is better (aim for 80+ bits)</li>
+                        <li><strong>Crack Time:</strong> Estimated time needed to guess your password</li>
+                        <li><strong>Pattern Detection:</strong> Identifies common weak patterns like sequences or repeated characters</li>
+                    </ul>
+                    
+                    <h3>Customization Options</h3>
+                    <p>You can customize:</p>
+                    <ul style="margin-left: 1.5rem; margin-bottom: 1rem;">
+                        <li><strong>Themes:</strong> 7 different color schemes</li>
+                        <li><strong>Passphrase Settings:</strong> Number of words and separators</li>
+                        <li><strong>Display Options:</strong> Toggle animations and visualizations</li>
+                    </ul>
+                    
+                    <h3>Import & Export</h3>
+                    <p>Export your settings to a JSON file for backup or transfer between devices. Import to restore your preferences.</p>
+                </div>
+            </section>
+
+            <!-- About & Credits Tab -->
+            <section id="about" class="tab-content">
+                <div class="card text-center">
+                    <h2>About Chronos</h2>
+                    <p style="font-size: 1.2rem; margin: 1.5rem 0;">
+                        A security education tool built with vanilla HTML, CSS, and JavaScript.
+                    </p>
+                    
+                    <div style="max-width: 600px; margin: 2rem auto;">
+                        <h3>🔒 Privacy First</h3>
+                        <p>All calculations happen in your browser. No passwords are stored, transmitted, or logged.</p>
+                        
+                        <h3>⚡ Offline Ready</h3>
+                        <p>Save this page to use it anywhere, anytime - no internet connection required.</p>
+                        
+                        <h3>🎯 Educational Focus</h3>
+                        <p>Designed to teach password security principles through interactive feedback.</p>
+                    </div>
+                    
+                    <div style="margin: 3rem 0; padding: 2rem; background: var(--bg-elevated); border-radius: var(--border-radius);">
+                        <h3>Credits</h3>
+                        <p style="font-size: 1.5rem; margin: 1rem 0;">
+                            Made with ❤️ by <a href="https://github.com/Aliriyaj007" target="_blank" style="color: var(--accent-primary); text-decoration: none;">Aliriyaj007</a>
+                        </p>
+                        <p style="color: var(--text-muted);">
+                            This project follows Google's design philosophy and best practices for clean, accessible web applications.
+                        </p>
+                    </div>
+                    
+                    <div style="font-size: 0.9rem; color: var(--text-muted);">
+                        <p>Version 1.0.0 | Built with vanilla HTML/CSS/JS</p>
+                        <p>Diceware word list based on EFF's Large Wordlist</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- File Input for Import (hidden) -->
+    <input type="file" id="importFile" accept=".json" style="display: none;">
+
+    <script>
+        // ===== MODULAR APPLICATION ARCHITECTURE =====
+        // Using IIFE pattern for module separation and no global pollution
+        
+        (function() {
+            'use strict';
+            
+            // ===== STATE MANAGEMENT MODULE =====
+            const State = (function() {
+                let state = {
+                    // App state
+                    password: '',
+                    strength: 0,
+                    entropy: 0,
+                    crackTime: 'Instantly',
+                    crackIcon: '⚡',
+                    patterns: [],
+                    suggestion: 'crystal-accordion-bracket-umpire',
+                    recipe: 'No password analyzed yet',
+                    
+                    // User settings
+                    settings: {
+                        theme: 'nordic',
+                        showPatterns: true,
+                        animateMeter: true,
+                        autoSuggest: true,
+                        showHashVisual: true,
+                        crackTimePreset: 'desktop',
+                        wordCount: 4,
+                        separator: '-'
+                    },
+                    
+                    // Challenge progress
+                    challenge: {
+                        currentStep: 0,
+                        completed: [false, false, false, false, false]
+                    },
+                    
+                    // Word lists
+                    wordList: []
+                };
+                
+                // Load initial state from localStorage
+                function loadState() {
+                    try {
+                        const saved = localStorage.getItem('chronosState');
+                        if (saved) {
+                            const parsed = JSON.parse(saved);
+                            state.settings = { ...state.settings, ...parsed.settings };
+                            state.challenge = { ...state.challenge, ...parsed.challenge };
+                        }
+                    } catch (e) {
+                        console.log('No saved state found');
+                    }
+                }
+                
+                // Save state to localStorage
+                function saveState() {
+                    try {
+                        const toSave = {
+                            settings: state.settings,
+                            challenge: state.challenge
+                        };
+                        localStorage.setItem('chronosState', JSON.stringify(toSave));
+                    } catch (e) {
+                        console.error('Failed to save state:', e);
+                    }
+                }
+                
+                // Update password and trigger analysis
+                function updatePassword(newPassword) {
+                    state.password = newPassword;
+                    return state.password;
+                }
+                
+                // Update settings
+                function updateSettings(newSettings) {
+                    state.settings = { ...state.settings, ...newSettings };
+                    saveState();
+                }
+                
+                // Update challenge progress
+                function updateChallenge(step, completed) {
+                    if (step >= 0 && step < state.challenge.completed.length) {
+                        state.challenge.completed[step] = completed;
+                        if (completed && step === state.challenge.currentStep) {
+                            state.challenge.currentStep++;
+                        }
+                        saveState();
+                    }
+                }
+                
+                // Reset challenge
+                function resetChallenge() {
+                    state.challenge = {
+                        currentStep: 0,
+                        completed: [false, false, false, false, false]
+                    };
+                    saveState();
+                }
+                
+                // Get current state
+                function getState() {
+                    return { ...state };
+                }
+                
+                // Initialize
+                loadState();
+                
+                return {
+                    updatePassword,
+                    updateSettings,
+                    updateChallenge,
+                    resetChallenge,
+                    getState,
+                    saveState
+                };
+            })();
+            
+            // ===== UTILITY FUNCTIONS MODULE =====
+            const Utils = (function() {
+                // Calculate password entropy
+                function calculateEntropy(password) {
+                    if (!password) return 0;
+                    
+                    // Character set analysis
+                    let charSetSize = 0;
+                    const hasLower = /[a-z]/.test(password);
+                    const hasUpper = /[A-Z]/.test(password);
+                    const hasDigits = /\d/.test(password);
+                    const hasSymbols = /[^a-zA-Z0-9]/.test(password);
+                    
+                    if (hasLower) charSetSize += 26;
+                    if (hasUpper) charSetSize += 26;
+                    if (hasDigits) charSetSize += 10;
+                    if (hasSymbols) charSetSize += 33; // Common symbols
+                    
+                    // Formula: L * log2(N) where L = length, N = charset size
+                    return Math.round(password.length * Math.log2(charSetSize || 1));
+                }
+                
+                // Estimate crack time based on entropy
+                function estimateCrackTime(entropy, patterns = []) {
+                    const state = State.getState();
+                    const preset = state.settings.crackTimePreset;
+                    
+                    // Adjust entropy for patterns
+                    let adjustedEntropy = entropy;
+                    if (patterns.length > 0) {
+                        adjustedEntropy -= patterns.length * 10;
+                    }
+                    
+                    // Guesses per second based on preset
+                    let guessesPerSecond;
+                    switch (preset) {
+                        case 'gpu': guessesPerSecond = 1e9; break; // 1 billion
+                        case 'cluster': guessesPerSecond = 1e12; break; // 1 trillion
+                        default: guessesPerSecond = 1e7; // 10 million (desktop)
+                    }
+                    
+                    // Total possible combinations
+                    const combinations = Math.pow(2, adjustedEntropy);
+                    const seconds = combinations / guessesPerSecond;
+                    
+                    // Format time
+                    if (seconds < 1) return { text: 'Instantly', icon: '⚡' };
+                    if (seconds < 60) return { text: `${Math.round(seconds)} seconds`, icon: '⏱️' };
+                    if (seconds < 3600) return { text: `${Math.round(seconds/60)} minutes`, icon: '⏱️' };
+                    if (seconds < 86400) return { text: `${Math.round(seconds/3600)} hours`, icon: '🕐' };
+                    if (seconds < 31536000) return { text: `${Math.round(seconds/86400)} days`, icon: '📅' };
+                    if (seconds < 3153600000) return { text: `${Math.round(seconds/31536000)} years`, icon: '🗓️' };
+                    if (seconds < 31536000000) return { text: `${Math.round(seconds/3153600000)} decades`, icon: '🏛️' };
+                    return { text: `${Math.round(seconds/31536000000)} centuries`, icon: '🏛️' };
+                }
+                
+                // Detect patterns in password
+                function detectPatterns(password) {
+                    const patterns = [];
+                    
+                    if (password.length < 8) patterns.push('Too Short');
+                    
+                    // Common sequences
+                    const sequences = [
+                        '123', 'abc', 'qwe', 'asd', 'zxc',
+                        '987', '321', 'cba', 'ewq', 'dsa'
+                    ];
+                    
+                    sequences.forEach(seq => {
+                        if (password.toLowerCase().includes(seq)) {
+                            patterns.push(`Sequence (${seq})`);
+                        }
+                    });
+                    
+                    // Repeated characters
+                    if (/(.)\1{2,}/.test(password)) {
+                        patterns.push('Repeated Characters');
+                    }
+                    
+                    // Common words
+                    const commonWords = [
+                        'password', 'admin', 'welcome', 'qwerty',
+                        'dragon', 'sunshine', 'master', 'hello'
+                    ];
+                    
+                    commonWords.forEach(word => {
+                        if (password.toLowerCase().includes(word)) {
+                            patterns.push(`Common Word (${word})`);
+                        }
+                    });
+                    
+                    // Leet speak detection
+                    const leetMap = {
+                        '4': 'a', '@': 'a', '0': 'o', '3': 'e',
+                        '1': 'i', '!': 'i', '7': 't', '$': 's'
+                    };
+                    
+                    let leetPassword = password.toLowerCase();
+                    Object.keys(leetMap).forEach(key => {
+                        leetPassword = leetPassword.replace(new RegExp(key, 'g'), leetMap[key]);
+                    });
+                    
+                    commonWords.forEach(word => {
+                        if (leetPassword.includes(word)) {
+                            patterns.push(`Leet Speak (${word})`);
+                        }
+                    });
+                    
+                    // Keyboard patterns
+                    const keyboardRows = [
+                        'qwertyuiop', 'asdfghjkl', 'zxcvbnm',
+                        '1234567890'
+                    ];
+                    
+                    for (let i = 0; i <= password.length - 4; i++) {
+                        const segment = password.toLowerCase().substr(i, 4);
+                        keyboardRows.forEach(row => {
+                            if (row.includes(segment)) {
+                                patterns.push('Keyboard Pattern');
+                            }
+                        });
+                    }
+                    
+                    return [...new Set(patterns)]; // Remove duplicates
+                }
+                
+                // Generate visual hash for demo
+                function generateHashVisual(password, container) {
+                    container.innerHTML = '';
+                    if (!password) return;
+                    
+                    // Simple deterministic "hash" for visualization
+                    const seed = password.split('').reduce((acc, char) => {
+                        return acc + char.charCodeAt(0);
+                    }, 0);
+                    
+                    // Create random but deterministic blobs
+                    const random = (seed) => {
+                        const x = Math.sin(seed++) * 10000;
+                        return x - Math.floor(x);
+                    };
+                    
+                    let currentSeed = seed;
+                    
+                    for (let i = 0; i < 5; i++) {
+                        const blob = document.createElement('div');
+                        blob.className = 'hash-blob';
+                        
+                        // Deterministic properties based on seed
+                        const hue = Math.floor(random(currentSeed++) * 360);
+                        const size = 40 + random(currentSeed++) * 80;
+                        const x = random(currentSeed++) * 100;
+                        const y = random(currentSeed++) * 100;
+                        
+                        blob.style.width = `${size}px`;
+                        blob.style.height = `${size}px`;
+                        blob.style.left = `${x}%`;
+                        blob.style.top = `${y}%`;
+                        blob.style.backgroundColor = `hsl(${hue}, 70%, 60%)`;
+                        
+                        container.appendChild(blob);
+                    }
+                }
+                
+                // Generate password recipe
+                function generateRecipe(password, entropy, patterns) {
+                    if (!password) return 'No password analyzed yet';
+                    
+                    const length = password.length;
+                    const hasLower = /[a-z]/.test(password);
+                    const hasUpper = /[A-Z]/.test(password);
+                    const hasDigits = /\d/.test(password);
+                    const hasSymbols = /[^a-zA-Z0-9]/.test(password);
+                    
+                    let recipe = `${length} characters`;
+                    
+                    const types = [];
+                    if (hasLower) types.push('lowercase');
+                    if (hasUpper) types.push('uppercase');
+                    if (hasDigits) types.push('digits');
+                    if (hasSymbols) types.push('symbols');
+                    
+                    if (types.length > 0) {
+                        recipe += `, using ${types.join(' + ')}`;
+                    }
+                    
+                    if (patterns.length > 0) {
+                        recipe += `, contains ${patterns.length} weak pattern(s)`;
+                    }
+                    
+                    recipe += `, ${entropy} bits of entropy`;
+                    
+                    return recipe;
+                }
+                
+                // Export state to JSON
+                function exportState() {
+                    const state = State.getState();
+                    const exportData = {
+                        version: '1.0.0',
+                        exportDate: new Date().toISOString(),
+                        settings: state.settings,
+                        challenge: state.challenge
+                    };
+                    
+                    return JSON.stringify(exportData, null, 2);
+                }
+                
+                // Import state from JSON
+                function importState(jsonString) {
+                    try {
+                        const data = JSON.parse(jsonString);
+                        
+                        if (data.version !== '1.0.0') {
+                            throw new Error('Invalid file version');
+                        }
+                        
+                        // Validate structure
+                        if (!data.settings || !data.challenge) {
+                            throw new Error('Invalid file structure');
+                        }
+                        
+                        // Update state
+                        State.updateSettings(data.settings);
+                        State.resetChallenge();
+                        
+                        // Restore challenge progress
+                        data.challenge.completed.forEach((completed, index) => {
+                            if (completed) {
+                                State.updateChallenge(index, true);
+                            }
+                        });
+                        
+                        return true;
+                    } catch (error) {
+                        console.error('Import failed:', error);
+                        return false;
+                    }
+                }
+                
+                return {
+                    calculateEntropy,
+                    estimateCrackTime,
+                    detectPatterns,
+                    generateHashVisual,
+                    generateRecipe,
+                    exportState,
+                    importState
+                };
+            })();
+            
+            // ===== PHRASE GENERATOR MODULE =====
+            const PhraseGenerator = (function() {
+                // EFF Large Wordlist (simplified version)
+                const wordList = [
+                    'abbey', 'accent', 'acid', 'acrobat', 'actress', 'admit', 'adult', 'aerial',
+                    'album', 'alibi', 'alley', 'amber', 'amend', 'ammo', 'angel', 'anger',
+                    'apple', 'archer', 'armor', 'arrow', 'artist', 'ashtray', 'atlas', 'avatar',
+                    'baby', 'bacon', 'badge', 'bagel', 'bakery', 'ballet', 'bamboo', 'banjo',
+                    'banner', 'barbecue', 'barcode', 'barley', 'barn', 'basil', 'basket', 'battle',
+                    'beach', 'beacon', 'bean', 'beard', 'beetle', 'begin', 'belly', 'bench',
+                    'beret', 'berry', 'beyond', 'bicycle', 'bigotry', 'bike', 'biology', 'birch',
+                    'bird', 'birth', 'bistro', 'black', 'blade', 'blanket', 'blend', 'blimp',
+                    'blink', 'bliss', 'blizzard', 'blouse', 'blue', 'blur', 'boat', 'body',
+                    'bold', 'bolt', 'bonus', 'book', 'boost', 'border', 'boss', 'bottle',
+                    'bottom', 'bounce', 'bowl', 'boxer', 'brain', 'brand', 'brass', 'brave',
+                    'bread', 'breeze', 'brick', 'bridge', 'bright', 'bring', 'broom', 'brush',
+                    'bubble', 'bucket', 'budget', 'buffalo', 'build', 'bulb', 'bumper', 'bundle',
+                    'bunker', 'burden', 'burger', 'burst', 'bus', 'butter', 'button', 'buyer',
+                    'cabin', 'cable', 'cactus', 'cage', 'cake', 'call', 'camera', 'camp',
+                    'canal', 'candle', 'cannon', 'canvas', 'canyon', 'capital', 'captain', 'car',
+                    'card', 'career', 'cargo', 'carpet', 'carrot', 'cart', 'case', 'cash',
+                    'casino', 'castle', 'casual', 'cat', 'catalog', 'catch', 'category', 'cattle',
+                    'caught', 'cause', 'caution', 'cave', 'ceiling', 'celery', 'cement', 'census',
+                    'century', 'cereal', 'certain', 'chair', 'chalk', 'champion', 'change', 'chaos',
+                    'chapter', 'charge', 'chase', 'cheap', 'check', 'cheek', 'cheese', 'chef',
+                    'cherry', 'chest', 'chicken', 'chief', 'child', 'chimney', 'choice', 'choose',
+                    'chop', 'chorus', 'chronic', 'chunk', 'churn', 'cigar', 'cinnamon', 'circle',
+                    'city', 'civil', 'claim', 'clap', 'clarify', 'claw', 'clay', 'clean',
+                    'clerk', 'clever', 'click', 'client', 'cliff', 'climb', 'clinic', 'clip',
+                    'clock', 'clog', 'close', 'cloth', 'cloud', 'clown', 'club', 'clump',
+                    'cluster', 'clutch', 'coach', 'coast', 'coconut', 'code', 'coffee', 'coil',
+                    'coin', 'collect', 'color', 'column', 'combine', 'come', 'comfort', 'comic',
+                    'common', 'company', 'concert', 'conduct', 'confirm', 'congress', 'connect', 'consider',
+                    'control', 'convince', 'cook', 'cool', 'copper', 'copy', 'coral', 'core',
+                    'corn', 'correct', 'cost', 'cotton', 'couch', 'country', 'couple', 'course',
+                    'cousin', 'cover', 'coyote', 'crack', 'cradle', 'craft', 'cram', 'crane',
+                    'crash', 'crater', 'crawl', 'crazy', 'cream', 'credit', 'creek', 'crew',
+                    'cricket', 'crime', 'crisp', 'critic', 'crop', 'cross', 'crouch', 'crowd',
+                    'crucial', 'cruel', 'cruise', 'crumble', 'crunch', 'crush', 'cry', 'crystal',
+                    'cube', 'culture', 'cup', 'cupboard', 'curious', 'current', 'curtain', 'curve',
+                    'cushion', 'custom', 'cute', 'cycle', 'dad', 'damage', 'damp', 'dance',
+                    'danger', 'daring', 'dark', 'dash', 'date', 'daughter', 'dawn', 'day',
+                    'deal', 'debate', 'debris', 'decade', 'december', 'decide', 'decline', 'decorate',
+                    'decrease', 'deer', 'defense', 'define', 'defy', 'degree', 'delay', 'deliver',
+                    'demand', 'demise', 'denial', 'dentist', 'deny', 'depart', 'depend', 'deposit',
+                    'depth', 'deputy', 'derive', 'describe', 'desert', 'design', 'desk', 'despair',
+                    'destroy', 'detail', 'detect', 'develop', 'device', 'devote', 'diagram', 'dial',
+                    'diamond', 'diary', 'dice', 'diesel', 'diet', 'differ', 'digital', 'dignity',
+                    'dilemma', 'dinner', 'dinosaur', 'direct', 'dirt', 'disagree', 'discover', 'disease',
+                    'dish', 'dismiss', 'disorder', 'display', 'distance', 'divert', 'divide', 'divorce',
+                    'dizzy', 'doctor', 'document', 'dog', 'doll', 'dolphin', 'domain', 'donate',
+                    'donkey', 'donor', 'door', 'dose', 'double', 'dove', 'draft', 'dragon',
+                    'drama', 'drastic', 'draw', 'dream', 'dress', 'drift', 'drill', 'drink',
+                    'drip', 'drive', 'drop', 'drum', 'dry', 'duck', 'dumb', 'dune',
+                    'during', 'dust', 'dutch', 'duty', 'dwarf', 'dynamic', 'eager', 'eagle',
+                    'early', 'earn', 'earth', 'easily', 'east', 'easy', 'echo', 'ecology',
+                    'economy', 'edge', 'edit', 'educate', 'effort', 'egg', 'eight', 'either',
+                    'elbow', 'elder', 'electric', 'elegant', 'element', 'elephant', 'elevator', 'elite',
+                    'else', 'embark', 'embody', 'embrace', 'emerge', 'emotion', 'employ', 'empower',
+                    'empty', 'enable', 'enact', 'end', 'endless', 'endorse', 'enemy', 'energy',
+                    'enforce', 'engage', 'engine', 'enhance', 'enjoy', 'enlist', 'enough', 'enrich',
+                    'enroll', 'ensure', 'enter', 'entire', 'entry', 'envelope', 'episode', 'equal',
+                    'equip', 'era', 'erase', 'erode', 'erosion', 'error', 'erupt', 'escape',
+                    'essay', 'essence', 'estate', 'eternal', 'ethics', 'evidence', 'evil', 'evoke',
+                    'evolve', 'exact', 'example', 'excess', 'exchange', 'excite', 'exclude', 'excuse',
+                    'execute', 'exercise', 'exhaust', 'exhibit', 'exile', 'exist', 'exit', 'exotic',
+                    'expand', 'expect', 'expire', 'explain', 'expose', 'express', 'extend', 'extra',
+                    'eye', 'eyebrow', 'fabric', 'face', 'faculty', 'fade', 'faint', 'faith',
+                    'fall', 'false', 'fame', 'family', 'famous', 'fan', 'fancy', 'fantasy',
+                    'farm', 'fashion', 'fat', 'fatal', 'father', 'fatigue', 'fault', 'favorite',
+                    'feature', 'february', 'federal', 'fee', 'feed', 'feel', 'female', 'fence',
+                    'festival', 'fetch', 'fever', 'few', 'fiber', 'fiction', 'field', 'figure',
+                    'file', 'film', 'filter', 'final', 'find', 'fine', 'finger', 'finish',
+                    'fire', 'firm', 'first', 'fiscal', 'fish', 'fit', 'fitness', 'fix',
+                    'flag', 'flame', 'flash', 'flat', 'flavor', 'flee', 'flight', 'flip',
+                    'float', 'flock', 'floor', 'flower', 'fluid', 'flush', 'fly', 'foam',
+                    'focus', 'fog', 'foil', 'fold', 'follow', 'food', 'foot', 'force',
+                    'forest', 'forget', 'fork', 'fortune', 'forum', 'forward', 'fossil', 'foster',
+                    'found', 'fox', 'fragile', 'frame', 'frequent', 'fresh', 'friend', 'fringe',
+                    'frog', 'front', 'frost', 'frown', 'frozen', 'fruit', 'fuel', 'fun',
+                    'funny', 'furnace', 'fury', 'future', 'gadget', 'gain', 'galaxy', 'gallery',
+                    'game', 'gap', 'garage', 'garbage', 'garden', 'garlic', 'garment', 'gas',
+                    'gasp', 'gate', 'gather', 'gauge', 'gaze', 'general', 'genius', 'genre',
+                    'gentle', 'genuine', 'gesture', 'ghost', 'giant', 'gift', 'giggle', 'ginger',
+                    'giraffe', 'girl', 'give', 'glad', 'glance', 'glare', 'glass', 'glide',
+                    'glimpse', 'globe', 'gloom', 'glory', 'glove', 'glow', 'glue', 'goat',
+                    'goddess', 'gold', 'good', 'goose', 'gorilla', 'gospel', 'gossip', 'govern',
+                    'gown', 'grab', 'grace', 'grain', 'grant', 'grape', 'grass', 'gravity',
+                    'great', 'green', 'grid', 'grief', 'grit', 'grocery', 'group', 'grow',
+                    'grunt', 'guard', 'guess', 'guide', 'guilt', 'guitar', 'gun', 'gym',
+                    'habit', 'hair', 'half', 'hammer', 'hamster', 'hand', 'happy', 'harbor',
+                    'hard', 'harsh', 'harvest', 'hat', 'have', 'hawk', 'hazard', 'head',
+                    'health', 'heart', 'heavy', 'hedgehog', 'height', 'hello', 'helmet', 'help',
+                    'hen', 'hero', 'hidden', 'high', 'hill', 'hint', 'hip', 'hire',
+                    'history', 'hobby', 'hockey', 'hold', 'hole', 'holiday', 'hollow', 'home',
+                    'honey', 'hood', 'hope', 'horn', 'horror', 'horse', 'hospital', 'host',
+                    'hotel', 'hour', 'hover', 'hub', 'huge', 'human', 'humble', 'humor',
+                    'hundred', 'hungry', 'hunt', 'hurdle', 'hurry', 'hurt', 'husband', 'hybrid',
+                    'ice', 'icon', 'idea', 'identify', 'idle', 'ignore', 'ill', 'illegal',
+                    'illness', 'image', 'imitate', 'immense', 'immune', 'impact', 'impose', 'improve',
+                    'impulse', 'inch', 'include', 'income', 'increase', 'index', 'indicate', 'indoor',
+                    'industry', 'infant', 'inflict', 'inform', 'inhale', 'inherit', 'initial', 'inject',
+                    'injury', 'inmate', 'inner', 'innocent', 'input', 'inquiry', 'insane', 'insect',
+                    'inside', 'inspire', 'install', 'intact', 'interest', 'into', 'invest', 'invite',
+                    'involve', 'iron', 'island', 'isolate', 'issue', 'item', 'ivory', 'jacket',
+                    'jaguar', 'jar', 'jazz', 'jealous', 'jeans', 'jelly', 'jewel', 'job',
+                    'join', 'joke', 'journey', 'joy', 'judge', 'juice', 'jump', 'jungle',
+                    'junior', 'junk', 'just', 'kangaroo', 'keen', 'keep', 'ketchup', 'key',
+                    'kick', 'kid', 'kidney', 'kind', 'kingdom', 'kiss', 'kit', 'kitchen',
+                    'kite', 'kitten', 'kiwi', 'knee', 'knife', 'knock', 'know', 'lab',
+                    'label', 'labor', 'ladder', 'lady', 'lake', 'lamp', 'language', 'laptop',
+                    'large', 'later', 'latin', 'laugh', 'laundry', 'lava', 'law', 'lawn',
+                    'lawsuit', 'layer', 'lazy', 'leader', 'leaf', 'learn', 'leave', 'lecture',
+                    'left', 'leg', 'legal', 'legend', 'leisure', 'lemon', 'lend', 'length',
+                    'lens', 'leopard', 'lesson', 'letter', 'level', 'liar', 'liberty', 'library',
+                    'license', 'life', 'lift', 'light', 'like', 'limb', 'limit', 'link',
+                    'lion', 'liquid', 'list', 'little', 'live', 'lizard', 'load', 'loan',
+                    'lobster', 'local', 'lock', 'logic', 'lonely', 'long', 'loop', 'lottery',
+                    'loud', 'lounge', 'love', 'loyal', 'lucky', 'luggage', 'lumber', 'lunar',
+                    'lunch', 'luxury', 'lyrics', 'machine', 'mad', 'magic', 'magnet', 'maid',
+                    'mail', 'main', 'major', 'make', 'mammal', 'man', 'manage', 'mandate',
+                    'mango', 'mansion', 'manual', 'maple', 'marble', 'march', 'margin', 'marine',
+                    'market', 'marriage', 'mask', 'mass', 'master', 'match', 'material', 'math',
+                    'matrix', 'matter', 'maximum', 'maze', 'meadow', 'mean', 'measure', 'meat',
+                    'mechanic', 'medal', 'media', 'melody', 'melt', 'member', 'memory', 'mention',
+                    'menu', 'mercy', 'merge', 'merit', 'merry', 'mesh', 'message', 'metal',
+                    'method', 'middle', 'midnight', 'milk', 'million', 'mimic', 'mind', 'minimum',
+                    'minor', 'minute', 'miracle', 'mirror', 'misery', 'miss', 'mistake', 'mix',
+                    'mixed', 'mixture', 'mobile', 'model', 'modify', 'mom', 'moment', 'monitor',
+                    'monkey', 'monster', 'month', 'moon', 'moral', 'more', 'morning', 'mosquito',
+                    'mother', 'motion', 'motor', 'mountain', 'mouse', 'move', 'movie', 'much',
+                    'muffin', 'mule', 'multiply', 'muscle', 'museum', 'mushroom', 'music', 'must',
+                    'mutual', 'myself', 'mystery', 'myth', 'naive', 'name', 'napkin', 'narrow',
+                    'nasty', 'nation', 'nature', 'near', 'neck', 'need', 'negative', 'neglect',
+                    'neither', 'nephew', 'nerve', 'nest', 'net', 'network', 'neutral', 'never',
+                    'news', 'next', 'nice', 'night', 'noble', 'noise', 'nominee', 'noodle',
+                    'normal', 'north', 'nose', 'notable', 'note', 'nothing', 'notice', 'novel',
+                    'now', 'nuclear', 'number', 'nurse', 'nut', 'oak', 'obey', 'object',
+                    'oblige', 'obscure', 'observe', 'obtain', 'obvious', 'occur', 'ocean', 'october',
+                    'odor', 'off', 'offer', 'office', 'often', 'oil', 'okay', 'old',
+                    'olive', 'olympic', 'omit', 'once', 'one', 'onion', 'online', 'only',
+                    'open', 'opera', 'opinion', 'oppose', 'option', 'orange', 'orbit', 'orchard',
+                    'order', 'ordinary', 'organ', 'orient', 'original', 'orphan', 'ostrich', 'other',
+                    'outdoor', 'outer', 'output', 'outside', 'oval', 'oven', 'over', 'own',
+                    'owner', 'oxygen', 'oyster', 'ozone', 'pact', 'paddle', 'page', 'pair',
+                    'palace', 'palm', 'panda', 'panel', 'panic', 'panther', 'paper', 'parade',
+                    'parent', 'park', 'parrot', 'party', 'pass', 'patch', 'path', 'patient',
+                    'patrol', 'pattern', 'pause', 'pave', 'payment', 'peace', 'peanut', 'pear',
+                    'peasant', 'pelican', 'pen', 'penalty', 'pencil', 'people', 'pepper', 'perfect',
+                    'permit', 'person', 'pet', 'phone', 'photo', 'phrase', 'physical', 'piano',
+                    'picnic', 'picture', 'piece', 'pig', 'pigeon', 'pill', 'pilot', 'pink',
+                    'pioneer', 'pipe', 'pistol', 'pitch', 'pizza', 'place', 'planet', 'plastic',
+                    'plate', 'play', 'pleasure', 'pledge', 'pluck', 'plug', 'plunge', 'poem',
+                    'poet', 'point', 'polar', 'pole', 'police', 'pond', 'pony', 'pool',
+                    'popular', 'portion', 'position', 'possible', 'post', 'potato', 'pottery', 'poverty',
+                    'powder', 'power', 'practice', 'praise', 'predict', 'prefer', 'prepare', 'present',
+                    'pretty', 'prevent', 'price', 'pride', 'primary', 'print', 'priority', 'prison',
+                    'private', 'prize', 'problem', 'process', 'produce', 'profit', 'program', 'project',
+                    'promote', 'proof', 'property', 'prosper', 'protect', 'proud', 'provide', 'public',
+                    'pudding', 'pull', 'pulp', 'pulse', 'pumpkin', 'punch', 'pupil', 'puppy',
+                    'purchase', 'purity', 'purpose', 'purse', 'push', 'put', 'puzzle', 'pyramid',
+                    'quality', 'quantum', 'quarter', 'question', 'quick', 'quit', 'quiz', 'quote',
+                    'rabbit', 'raccoon', 'race', 'rack', 'radar', 'radio', 'rail', 'rain',
+                    'raise', 'rally', 'ramp', 'ranch', 'random', 'range', 'rapid', 'rare',
+                    'rate', 'rather', 'raven', 'raw', 'razor', 'ready', 'real', 'reason',
+                    'rebel', 'rebuild', 'recall', 'receive', 'recipe', 'record', 'recycle', 'reduce',
+                    'reflect', 'reform', 'refuse', 'region', 'regret', 'regular', 'reject', 'relax',
+                    'release', 'relief', 'rely', 'remain', 'remember', 'remind', 'remove', 'render',
+                    'renew', 'rent', 'reopen', 'repair', 'repeat', 'replace', 'report', 'require',
+                    'rescue', 'resemble', 'resist', 'resource', 'response', 'result', 'retire', 'retreat',
+                    'return', 'reunion', 'reveal', 'review', 'reward', 'rhythm', 'rib', 'ribbon',
+                    'rice', 'rich', 'ride', 'ridge', 'rifle', 'right', 'rigid', 'ring',
+                    'riot', 'rip', 'ritual', 'rival', 'river', 'road', 'roast', 'robot',
+                    'robust', 'rocket', 'romance', 'roof', 'rookie', 'room', 'rose', 'rotate',
+                    'rough', 'round', 'route', 'royal', 'rubber', 'rude', 'rug', 'rule',
+                    'run', 'runway', 'rural', 'sad', 'saddle', 'sadness', 'safe', 'sail',
+                    'salad', 'salmon', 'salon', 'salt', 'same', 'sample', 'sand', 'satisfy',
+                    'satoshi', 'sauce', 'sausage', 'save', 'say', 'scale', 'scan', 'scare',
+                    'scatter', 'scene', 'scheme', 'school', 'science', 'scissors', 'scorpion', 'scout',
+                    'scrap', 'screen', 'script', 'scrub', 'sea', 'search', 'season', 'seat',
+                    'second', 'secret', 'section', 'security', 'seed', 'seek', 'segment', 'select',
+                    'sell', 'seminar', 'senior', 'sense', 'sentence', 'series', 'service', 'session',
+                    'settle', 'setup', 'seven', 'shadow', 'shaft', 'shallow', 'share', 'shed',
+                    'shell', 'sheriff', 'shield', 'shift', 'shine', 'ship', 'shiver', 'shock',
+                    'shoe', 'shoot', 'shop', 'short', 'shoulder', 'shove', 'shrimp', 'shrug',
+                    'shuffle', 'shy', 'sibling', 'sick', 'side', 'siege', 'sight', 'sign',
+                    'silent', 'silk', 'silly', 'silver', 'similar', 'simple', 'since', 'sing',
+                    'siren', 'sister', 'situate', 'six', 'size', 'skate', 'sketch', 'ski',
+                    'skill', 'skin', 'skirt', 'skull', 'slab', 'slam', 'sleep', 'slender',
+                    'slice', 'slide', 'slight', 'slim', 'slogan', 'slot', 'slow', 'slush',
+                    'small', 'smart', 'smile', 'smoke', 'smooth', 'snack', 'snake', 'snap',
+                    'sniff', 'snow', 'soap', 'soccer', 'social', 'sock', 'soda', 'soft',
+                    'solar', 'soldier', 'solid', 'solution', 'solve', 'someone', 'song', 'soon',
+                    'sorry', 'sort', 'soul', 'sound', 'soup', 'source', 'south', 'space',
+                    'spare', 'spatial', 'spawn', 'speak', 'special', 'speed', 'spell', 'spend',
+                    'sphere', 'spice', 'spider', 'spike', 'spin', 'spirit', 'split', 'spoil',
+                    'sponsor', 'spoon', 'sport', 'spot', 'spray', 'spread', 'spring', 'spy',
+                    'square', 'squeeze', 'squirrel', 'stable', 'stadium', 'staff', 'stage', 'stairs',
+                    'stamp', 'stand', 'start', 'state', 'stay', 'steak', 'steel', 'stem',
+                    'step', 'stereo', 'stick', 'still', 'sting', 'stock', 'stomach', 'stone',
+                    'stool', 'story', 'stove', 'strategy', 'street', 'strike', 'strong', 'struggle',
+                    'student', 'stuff', 'stumble', 'style', 'subject', 'submit', 'subway', 'success',
+                    'such', 'sudden', 'suffer', 'sugar', 'suggest', 'suit', 'summer', 'sun',
+                    'sunny', 'sunset', 'super', 'supply', 'supreme', 'sure', 'surface', 'surge',
+                    'surprise', 'surround', 'survey', 'suspect', 'sustain', 'swallow', 'swamp', 'swap',
+                    'swarm', 'swear', 'sweet', 'swift', 'swim', 'swing', 'switch', 'sword',
+                    'symbol', 'symptom', 'syrup', 'system', 'table', 'tackle', 'tag', 'tail',
+                    'talent', 'talk', 'tank', 'tape', 'target', 'task', 'taste', 'tattoo',
+                    'taxi', 'teach', 'team', 'tell', 'ten', 'tenant', 'tennis', 'tent',
+                    'term', 'test', 'text', 'thank', 'that', 'theme', 'then', 'theory',
+                    'there', 'they', 'thing', 'this', 'thought', 'three', 'thrive', 'throw',
+                    'thumb', 'thunder', 'ticket', 'tide', 'tiger', 'tilt', 'timber', 'time',
+                    'tiny', 'tip', 'tired', 'tissue', 'title', 'toast', 'tobacco', 'today',
+                    'toddler', 'toe', 'together', 'toilet', 'token', 'tomato', 'tomorrow', 'tone',
+                    'tongue', 'tonight', 'tool', 'tooth', 'top', 'topic', 'topple', 'torch',
+                    'tornado', 'tortoise', 'toss', 'total', 'tourist', 'toward', 'tower', 'town',
+                    'toy', 'track', 'trade', 'traffic', 'tragic', 'train', 'transfer', 'trap',
+                    'trash', 'travel', 'tray', 'treat', 'tree', 'trend', 'trial', 'tribe',
+                    'trick', 'trigger', 'trim', 'trip', 'trophy', 'trouble', 'truck', 'true',
+                    'truly', 'trumpet', 'trust', 'truth', 'try', 'tube', 'tuition', 'tumble',
+                    'tuna', 'tunnel', 'turkey', 'turn', 'turtle', 'twelve', 'twenty', 'twice',
+                    'twin', 'twist', 'two', 'type', 'typical', 'ugly', 'umbrella', 'unable',
+                    'unaware', 'uncle', 'uncover', 'under', 'undo', 'unfair', 'unfold', 'unhappy',
+                    'uniform', 'unique', 'unit', 'universe', 'unknown', 'unlock', 'until', 'unusual',
+                    'unveil', 'update', 'upgrade', 'uphold', 'upon', 'upper', 'upset', 'urban',
+                    'urge', 'usage', 'use', 'used', 'useful', 'useless', 'usual', 'utility',
+                    'vacant', 'vacuum', 'vague', 'valid', 'valley', 'valve', 'van', 'vanish',
+                    'vapor', 'various', 'vast', 'vault', 'vehicle', 'velvet', 'vendor', 'venture',
+                    'venue', 'verb', 'verify', 'version', 'very', 'vessel', 'veteran', 'viable',
+                    'vibrant', 'vicious', 'victory', 'video', 'view', 'village', 'vintage', 'violin',
+                    'virtual', 'virus', 'visa', 'visit', 'visual', 'vital', 'vivid', 'vocal',
+                    'voice', 'void', 'volcano', 'volume', 'vote', 'voyage', 'wage', 'wagon',
+                    'wait', 'walk', 'wall', 'walnut', 'want', 'warfare', 'warm', 'warrior',
+                    'wash', 'wasp', 'waste', 'water', 'wave', 'way', 'wealth', 'weapon',
+                    'wear', 'weasel', 'weather', 'web', 'wedding', 'weekend', 'weird', 'welcome',
+                    'west', 'wet', 'whale', 'what', 'wheat', 'wheel', 'when', 'where',
+                    'whip', 'whisper', 'wide', 'width', 'wife', 'wild', 'will', 'win',
+                    'window', 'wine', 'wing', 'wink', 'winner', 'winter', 'wire', 'wisdom',
+                    'wise', 'wish', 'witness', 'wolf', 'woman', 'wonder', 'wood', 'wool',
+                    'word', 'work', 'world', 'worry', 'worth', 'wrap', 'wreck', 'wrestle',
+                    'wrist', 'write', 'wrong', 'yard', 'year', 'yellow', 'you', 'young',
+                    'youth', 'zebra', 'zero', 'zone', 'zoo'
+                ];
+                
+                // Generate a random passphrase
+                function generatePassphrase(wordCount = 4, separator = '-') {
+                    const words = [];
+                    for (let i = 0; i < wordCount; i++) {
+                        const randomIndex = Math.floor(Math.random() * wordList.length);
+                        words.push(wordList[randomIndex]);
+                    }
+                    return words.join(separator);
+                }
+                
+                return {
+                    generatePassphrase,
+                    wordList
+                };
+            })();
+            
+            // ===== UI MANAGER MODULE =====
+            const UIManager = (function() {
+                // DOM Elements cache
+                const elements = {};
+                
+                // Initialize DOM references
+                function init() {
+                    // Input & Controls
+                    elements.passwordInput = document.getElementById('passwordInput');
+                    elements.toggleVisibility = document.getElementById('toggleVisibility');
+                    elements.wordCount = document.getElementById('wordCount');
+                    elements.separator = document.getElementById('separator');
+                    
+                    // Strength Meter
+                    elements.strengthFill = document.getElementById('strengthFill');
+                    elements.strengthText = document.getElementById('strengthText');
+                    elements.entropyBadge = document.getElementById('entropyBadge');
+                    
+                    // Crack Time
+                    elements.crackTime = document.getElementById('crackTime');
+                    elements.crackIcon = document.getElementById('crackIcon');
+                    
+                    // Anatomy
+                    elements.anatomyGrid = document.getElementById('anatomyGrid');
+                    elements.patternTags = document.getElementById('patternTags');
+                    
+                    // Suggestions
+                    elements.suggestionText = document.getElementById('suggestionText');
+                    elements.useSuggestionBtn = document.getElementById('useSuggestionBtn');
+                    elements.newSuggestionBtn = document.getElementById('newSuggestionBtn');
+                    
+                    // Hash Visualization
+                    elements.hashVisualization = document.getElementById('hashVisualization');
+                    
+                    // Recipe
+                    elements.recipeText = document.getElementById('recipeText');
+                    elements.copyRecipeBtn = document.getElementById('copyRecipeBtn');
+                    
+                    // Tabs
+                    elements.tabs = document.querySelectorAll('.tab');
+                    elements.tabContents = document.querySelectorAll('.tab-content');
+                    
+                    // Theme Selector
+                    elements.themeSelector = document.getElementById('themeSelector');
+                    
+                    // Settings Toggles
+                    elements.togglePatterns = document.getElementById('togglePatterns');
+                    elements.toggleAnimations = document.getElementById('toggleAnimations');
+                    elements.toggleAutoSuggest = document.getElementById('toggleAutoSuggest');
+                    elements.toggleHashVisual = document.getElementById('toggleHashVisual');
+                    elements.crackTimePreset = document.getElementById('crackTimePreset');
+                    elements.saveSettingsBtn = document.getElementById('saveSettingsBtn');
+                    
+                    // Challenge
+                    elements.challengeSteps = document.getElementById('challengeSteps');
+                    elements.progressBar = document.getElementById('progressBar');
+                    elements.progressText = document.getElementById('progressText');
+                    elements.resetChallengeBtn = document.getElementById('resetChallengeBtn');
+                    
+                    // Import/Export
+                    elements.exportBtn = document.getElementById('exportBtn');
+                    elements.importBtn = document.getElementById('importBtn');
+                    elements.importFile = document.getElementById('importFile');
+                    elements.resetBtn = document.getElementById('resetBtn');
+                    
+                    // Populate word list in State
+                    const state = State.getState();
+                    state.wordList = PhraseGenerator.wordList;
+                }
+                
+                // Update strength meter
+                function updateStrengthMeter(entropy, password) {
+                    const maxEntropy = 128;
+                    const percentage = Math.min((entropy / maxEntropy) * 100, 100);
+                    
+                    elements.strengthFill.style.width = `${percentage}%`;
+                    
+                    // Update strength text and color
+                    let strengthLevel, color;
+                    if (entropy < 40) {
+                        strengthLevel = 'Very Weak';
+                        color = '#bf616a'; // danger
+                    } else if (entropy < 60) {
+                        strengthLevel = 'Weak';
+                        color = '#d08770'; // orange
+                    } else if (entropy < 80) {
+                        strengthLevel = 'Fair';
+                        color = '#ebcb8b'; // warning
+                    } else if (entropy < 100) {
+                        strengthLevel = 'Strong';
+                        color = '#a3be8c'; // success
+                    } else {
+                        strengthLevel = 'Very Strong';
+                        color = '#88c0d0'; // accent-primary
+                    }
+                    
+                    elements.strengthText.textContent = strengthLevel;
+                    elements.strengthText.style.color = color;
+                    elements.strengthFill.style.background = `linear-gradient(90deg, #bf616a, #d08770, #ebcb8b, #a3be8c, #88c0d0)`;
+                    elements.strengthFill.style.backgroundSize = `${maxEntropy * 2}px 100%`;
+                    elements.strengthFill.style.backgroundPosition = `-${entropy * 2}px 0`;
+                    
+                    // Update entropy badge
+                    elements.entropyBadge.textContent = `${entropy} bits`;
+                }
+                
+                // Update crack time display
+                function updateCrackTime(crackTimeData) {
+                    elements.crackTime.textContent = crackTimeData.text;
+                    elements.crackIcon.textContent = crackTimeData.icon;
+                }
+                
+                // Update password anatomy
+                function updateAnatomy(password, entropy, patterns) {
+                    const hasLower = /[a-z]/.test(password);
+                    const hasUpper = /[A-Z]/.test(password);
+                    const hasDigits = /\d/.test(password);
+                    const hasSymbols = /[^a-zA-Z0-9]/.test(password);
+                    const length = password.length;
+                    
+                    const anatomyItems = [
+                        {
+                            label: `Length: ${length} chars`,
+                            status: length >= 12 ? 'success' : length >= 8 ? 'warning' : 'danger',
+                            icon: length >= 12 ? '✓' : length >= 8 ? '⚠' : '✗'
+                        },
+                        {
+                            label: 'Lowercase letters',
+                            status: hasLower ? 'success' : 'warning',
+                            icon: hasLower ? '✓' : '⚠'
+                        },
+                        {
+                            label: 'Uppercase letters',
+                            status: hasUpper ? 'success' : 'warning',
+                            icon: hasUpper ? '✓' : '⚠'
+                        },
+                        {
+                            label: 'Numbers',
+                            status: hasDigits ? 'success' : 'warning',
+                            icon: hasDigits ? '✓' : '⚠'
+                        },
+                        {
+                            label: 'Symbols',
+                            status: hasSymbols ? 'success' : 'warning',
+                            icon: hasSymbols ? '✓' : '⚠'
+                        },
+                        {
+                            label: 'No patterns',
+                            status: patterns.length === 0 ? 'success' : 'danger',
+                            icon: patterns.length === 0 ? '✓' : '✗'
+                        }
+                    ];
+                    
+                    // Clear and rebuild anatomy grid
+                    elements.anatomyGrid.innerHTML = '';
+                    anatomyItems.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'anatomy-item';
+                        div.innerHTML = `
+                            <div class="checkmark ${item.status}">${item.icon}</div>
+                            <span>${item.label}</span>
+                        `;
+                        elements.anatomyGrid.appendChild(div);
+                    });
+                    
+                    // Update pattern tags
+                    elements.patternTags.innerHTML = '';
+                    patterns.forEach(pattern => {
+                        const tag = document.createElement('span');
+                        tag.className = 'pattern-tag';
+                        tag.textContent = pattern;
+                        elements.patternTags.appendChild(tag);
+                    });
+                }
+                
+                // Update suggestion
+                function updateSuggestion(suggestion) {
+                    elements.suggestionText.textContent = suggestion;
+                }
+                
+                // Update recipe
+                function updateRecipe(recipe) {
+                    elements.recipeText.textContent = recipe;
+                }
+                
+                // Generate theme selector
+                function generateThemeSelector() {
+                    const themes = [
+                        { id: 'nordic', name: 'Nordic', preview: '#2e3440,#3b4252,#88c0d0,#eceff4' },
+                        { id: 'midnight', name: 'Midnight', preview: '#0f172a,#1e293b,#60a5fa,#f1f5f9' },
+                        { id: 'forest', name: 'Forest', preview: '#1a2f1a,#2d4a2d,#84cc16,#d1fae5' },
+                        { id: 'sunset', name: 'Sunset', preview: '#431407,#7c2d12,#f97316,#ffedd5' },
+                        { id: 'ocean', name: 'Ocean', preview: '#0c4a6e,#0369a1,#0ea5e9,#e0f2fe' },
+                        { id: 'lavender', name: 'Lavender', preview: '#3e1b4d,#5b21b6,#a855f7,#f3e8ff' },
+                        { id: 'monochrome', name: 'Monochrome', preview: '#262626,#404040,#a3a3a3,#f5f5f5' }
+                    ];
+                    
+                    const state = State.getState();
+                    
+                    elements.themeSelector.innerHTML = '';
+                    themes.forEach(theme => {
+                        const colors = theme.preview.split(',');
+                        const option = document.createElement('div');
+                        option.className = `theme-option ${theme.id === state.settings.theme ? 'active' : ''}`;
+                        option.dataset.theme = theme.id;
+                        
+                        option.innerHTML = `
+                            <div class="theme-preview" style="background: linear-gradient(135deg, ${colors[0]}, ${colors[1]});"></div>
+                            <div style="font-size: 0.9rem;">${theme.name}</div>
+                        `;
+                        
+                        elements.themeSelector.appendChild(option);
+                    });
+                }
+                
+                // Apply theme
+                function applyTheme(themeId) {
+                    const themes = {
+                        nordic: {
+                            '--bg-primary': '#2e3440',
+                            '--bg-surface': '#3b4252',
+                            '--bg-elevated': '#434c5e',
+                            '--bg-input': '#4c566a',
+                            '--text-primary': '#eceff4',
+                            '--text-secondary': '#d8dee9',
+                            '--text-muted': '#81a1c1',
+                            '--accent-primary': '#88c0d0',
+                            '--accent-secondary': '#5e81ac',
+                            '--success': '#a3be8c',
+                            '--warning': '#ebcb8b',
+                            '--danger': '#bf616a'
+                        },
+                        midnight: {
+                            '--bg-primary': '#0f172a',
+                            '--bg-surface': '#1e293b',
+                            '--bg-elevated': '#334155',
+                            '--bg-input': '#475569',
+                            '--text-primary': '#f1f5f9',
+                            '--text-secondary': '#cbd5e1',
+                            '--text-muted': '#94a3b8',
+                            '--accent-primary': '#60a5fa',
+                            '--accent-secondary': '#3b82f6',
+                            '--success': '#4ade80',
+                            '--warning': '#fbbf24',
+                            '--danger': '#f87171'
+                        },
+                        forest: {
+                            '--bg-primary': '#1a2f1a',
+                            '--bg-surface': '#2d4a2d',
+                            '--bg-elevated': '#3d5c3d',
+                            '--bg-input': '#4a6b4a',
+                            '--text-primary': '#d1fae5',
+                            '--text-secondary': '#a7f3d0',
+                            '--text-muted': '#6ee7b7',
+                            '--accent-primary': '#84cc16',
+                            '--accent-secondary': '#65a30d',
+                            '--success': '#22c55e',
+                            '--warning': '#eab308',
+                            '--danger': '#ef4444'
+                        },
+                        sunset: {
+                            '--bg-primary': '#431407',
+                            '--bg-surface': '#7c2d12',
+                            '--bg-elevated': '#9a3412',
+                            '--bg-input': '#c2410c',
+                            '--text-primary': '#ffedd5',
+                            '--text-secondary': '#fed7aa',
+                            '--text-muted': '#fdba74',
+                            '--accent-primary': '#f97316',
+                            '--accent-secondary': '#ea580c',
+                            '--success': '#84cc16',
+                            '--warning': '#eab308',
+                            '--danger': '#dc2626'
+                        },
+                        ocean: {
+                            '--bg-primary': '#0c4a6e',
+                            '--bg-surface': '#0369a1',
+                            '--bg-elevated': '#0284c7',
+                            '--bg-input': '#0ea5e9',
+                            '--text-primary': '#e0f2fe',
+                            '--text-secondary': '#bae6fd',
+                            '--text-muted': '#7dd3fc',
+                            '--accent-primary': '#0ea5e9',
+                            '--accent-secondary': '#0284c7',
+                            '--success': '#22d3ee',
+                            '--warning': '#fbbf24',
+                            '--danger': '#ef4444'
+                        },
+                        lavender: {
+                            '--bg-primary': '#3e1b4d',
+                            '--bg-surface': '#5b21b6',
+                            '--bg-elevated': '#6d28d9',
+                            '--bg-input': '#7c3aed',
+                            '--text-primary': '#f3e8ff',
+                            '--text-secondary': '#e9d5ff',
+                            '--text-muted': '#d8b4fe',
+                            '--accent-primary': '#a855f7',
+                            '--accent-secondary': '#9333ea',
+                            '--success': '#c084fc',
+                            '--warning': '#f0abfc',
+                            '--danger': '#fb7185'
+                        },
+                        monochrome: {
+                            '--bg-primary': '#262626',
+                            '--bg-surface': '#404040',
+                            '--bg-elevated': '#525252',
+                            '--bg-input': '#737373',
+                            '--text-primary': '#f5f5f5',
+                            '--text-secondary': '#e5e5e5',
+                            '--text-muted': '#a3a3a3',
+                            '--accent-primary': '#a3a3a3',
+                            '--accent-secondary': '#737373',
+                            '--success': '#86efac',
+                            '--warning': '#fde047',
+                            '--danger': '#fca5a5'
+                        }
+                    };
+                    
+                    const theme = themes[themeId] || themes.nordic;
+                    const root = document.documentElement;
+                    
+                    Object.entries(theme).forEach(([property, value]) => {
+                        root.style.setProperty(property, value);
+                    });
+                    
+                    // Update active theme in selector
+                    document.querySelectorAll('.theme-option').forEach(option => {
+                        option.classList.toggle('active', option.dataset.theme === themeId);
+                    });
+                }
+                
+                // Update settings display
+                function updateSettingsDisplay() {
+                    const state = State.getState();
+                    const settings = state.settings;
+                    
+                    // Update toggles
+                    elements.togglePatterns.classList.toggle('active', settings.showPatterns);
+                    elements.toggleAnimations.classList.toggle('active', settings.animateMeter);
+                    elements.toggleAutoSuggest.classList.toggle('active', settings.autoSuggest);
+                    elements.toggleHashVisual.classList.toggle('active', settings.showHashVisual);
+                    
+                    // Update selects
+                    elements.crackTimePreset.value = settings.crackTimePreset;
+                    elements.wordCount.value = settings.wordCount;
+                    elements.separator.value = settings.separator;
+                }
+                
+                // Generate challenge steps
+                function generateChallengeSteps() {
+                    const state = State.getState();
+                    const challenge = state.challenge;
+                    
+                    const steps = [
+                        {
+                            title: 'Create a 12+ character password',
+                            description: 'Length is the most important factor in password strength.',
+                            check: (password) => password.length >= 12
+                        },
+                        {
+                            title: 'Use at least 3 character types',
+                            description: 'Combine lowercase, uppercase, numbers, and symbols.',
+                            check: (password) => {
+                                const types = [
+                                    /[a-z]/.test(password),
+                                    /[A-Z]/.test(password),
+                                    /\d/.test(password),
+                                    /[^a-zA-Z0-9]/.test(password)
+                                ];
+                                return types.filter(Boolean).length >= 3;
+                            }
+                        },
+                        {
+                            title: 'Avoid common words and patterns',
+                            description: 'Don\'t use dictionary words, sequences, or repeated characters.',
+                            check: (password) => Utils.detectPatterns(password).length === 0
+                        },
+                        {
+                            title: 'Achieve 80+ bits of entropy',
+                            description: 'This makes your password computationally hard to crack.',
+                            check: (password) => Utils.calculateEntropy(password) >= 80
+                        },
+                        {
+                            title: 'Try a Diceware passphrase',
+                            description: 'Generate and test a memorable random word passphrase.',
+                            check: () => true // Completed by user action
+                        }
+                    ];
+                    
+                    elements.challengeSteps.innerHTML = '';
+                    
+                    steps.forEach((step, index) => {
+                        const stepDiv = document.createElement('div');
+                        stepDiv.className = 'card';
+                        stepDiv.style.marginBottom = '1rem';
+                        stepDiv.style.opacity = index > challenge.currentStep ? '0.6' : '1';
+                        
+                        const isCompleted = challenge.completed[index];
+                        
+                        stepDiv.innerHTML = `
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <div style="width: 32px; height: 32px; border-radius: 50%; background: ${isCompleted ? 'var(--success)' : 'var(--bg-input)'}; display: flex; align-items: center; justify-content: center;">
+                                    ${isCompleted ? '✓' : index + 1}
+                                </div>
+                                <div style="flex: 1;">
+                                    <h3>${step.title}</h3>
+                                    <p style="color: var(--text-muted); font-size: 0.9rem;">${step.description}</p>
+                                </div>
+                                ${isCompleted ? '<div style="color: var(--success);">Completed ✓</div>' : 
+                                  index === challenge.currentStep ? '<div style="color: var(--accent-primary);">Current →</div>' : 
+                                  '<div style="color: var(--text-muted);">Locked</div>'}
+                            </div>
+                        `;
+                        
+                        elements.challengeSteps.appendChild(stepDiv);
+                    });
+                    
+                    // Update progress
+                    const completedCount = challenge.completed.filter(Boolean).length;
+                    const progress = (completedCount / steps.length) * 100;
+                    elements.progressBar.style.width = `${progress}%`;
+                    elements.progressText.textContent = `Progress: ${completedCount}/${steps.length}`;
+                }
+                
+                // Show notification
+                function showNotification(message, type = 'info') {
+                    // Remove existing notification
+                    const existing = document.querySelector('.notification');
+                    if (existing) existing.remove();
+                    
+                    const notification = document.createElement('div');
+                    notification.className = `notification`;
+                    notification.style.cssText = `
+                        position: fixed;
+                        top: 20px;
+                        right: 20px;
+                        padding: 1rem 1.5rem;
+                        background: ${type === 'success' ? 'var(--success)' : type === 'error' ? 'var(--danger)' : 'var(--accent-primary)'};
+                        color: var(--bg-primary);
+                        border-radius: var(--border-radius);
+                        box-shadow: var(--shadow);
+                        z-index: 1000;
+                        animation: slideIn 0.3s ease;
+                    `;
+                    
+                    notification.textContent = message;
+                    document.body.appendChild(notification);
+                    
+                    // Auto-remove after 3 seconds
+                    setTimeout(() => {
+                        notification.style.animation = 'slideOut 0.3s ease';
+                        setTimeout(() => notification.remove(), 300);
+                    }, 3000);
+                    
+                    // Add CSS for animation
+                    if (!document.querySelector('#notification-styles')) {
+                        const style = document.createElement('style');
+                        style.id = 'notification-styles';
+                        style.textContent = `
+                            @keyframes slideIn {
+                                from { transform: translateX(100%); opacity: 0; }
+                                to { transform: translateX(0); opacity: 1; }
+                            }
+                            @keyframes slideOut {
+                                from { transform: translateX(0); opacity: 1; }
+                                to { transform: translateX(100%); opacity: 0; }
+                            }
+                        `;
+                        document.head.appendChild(style);
+                    }
+                }
+                
+                return {
+                    init,
+                    elements,
+                    updateStrengthMeter,
+                    updateCrackTime,
+                    updateAnatomy,
+                    updateSuggestion,
+                    updateRecipe,
+                    generateThemeSelector,
+                    applyTheme,
+                    updateSettingsDisplay,
+                    generateChallengeSteps,
+                    showNotification
+                };
+            })();
+            
+            // ===== EVENT HANDLER MODULE =====
+            const EventHandlers = (function() {
+                // Initialize all event listeners
+                function init() {
+                    const ui = UIManager;
+                    const elements = ui.elements;
+                    
+                    // Password input
+                    elements.passwordInput.addEventListener('input', handlePasswordInput);
+                    
+                    // Toggle password visibility
+                    elements.toggleVisibility.addEventListener('click', togglePasswordVisibility);
+                    
+                    // Use suggestion
+                    elements.useSuggestionBtn.addEventListener('click', useSuggestion);
+                    
+                    // Generate new suggestion
+                    elements.newSuggestionBtn.addEventListener('click', generateNewSuggestion);
+                    
+                    // Copy recipe
+                    elements.copyRecipeBtn.addEventListener('click', copyRecipe);
+                    
+                    // Tab navigation
+                    elements.tabs.forEach(tab => {
+                        tab.addEventListener('click', switchTab);
+                    });
+                    
+                    // Theme selection
+                    document.addEventListener('click', handleThemeSelection);
+                    
+                    // Settings toggles
+                    elements.togglePatterns.addEventListener('click', () => toggleSetting('showPatterns'));
+                    elements.toggleAnimations.addEventListener('click', () => toggleSetting('animateMeter'));
+                    elements.toggleAutoSuggest.addEventListener('click', () => toggleSetting('autoSuggest'));
+                    elements.toggleHashVisual.addEventListener('click', () => toggleSetting('showHashVisual'));
+                    
+                    // Select changes
+                    elements.crackTimePreset.addEventListener('change', handleCrackTimePresetChange);
+                    elements.wordCount.addEventListener('change', handleWordCountChange);
+                    elements.separator.addEventListener('change', handleSeparatorChange);
+                    
+                    // Save settings
+                    elements.saveSettingsBtn.addEventListener('click', saveSettings);
+                    
+                    // Challenge reset
+                    elements.resetChallengeBtn.addEventListener('click', resetChallenge);
+                    
+                    // Import/Export
+                    elements.exportBtn.addEventListener('click', exportSettings);
+                    elements.importBtn.addEventListener('click', triggerImport);
+                    elements.importFile.addEventListener('change', handleFileImport);
+                    elements.resetBtn.addEventListener('click', resetToDefaults);
+                    
+                    // Initial suggestions and display
+                    generateNewSuggestion();
+                    ui.generateThemeSelector();
+                    ui.generateChallengeSteps();
+                    ui.updateSettingsDisplay();
+                    
+                    // Apply saved theme
+                    const state = State.getState();
+                    ui.applyTheme(state.settings.theme);
+                    
+                    // Test a weak password on load for demo
+                    setTimeout(() => {
+                        elements.passwordInput.value = 'password123';
+                        handlePasswordInput({ target: elements.passwordInput });
+                    }, 500);
+                }
+                
+                // Handle password input
+                function handlePasswordInput(event) {
+                    const password = event.target.value;
+                    State.updatePassword(password);
+                    
+                    // Calculate metrics
+                    const entropy = Utils.calculateEntropy(password);
+                    const patterns = Utils.detectPatterns(password);
+                    const crackTime = Utils.estimateCrackTime(entropy, patterns);
+                    const recipe = Utils.generateRecipe(password, entropy, patterns);
+                    
+                    // Update UI
+                    UIManager.updateStrengthMeter(entropy, password);
+                    UIManager.updateCrackTime(crackTime);
+                    UIManager.updateAnatomy(password, entropy, patterns);
+                    UIManager.updateRecipe(recipe);
+                    
+                    // Update hash visualization
+                    if (State.getState().settings.showHashVisual) {
+                        Utils.generateHashVisual(password, UIManager.elements.hashVisualization);
+                    }
+                    
+                    // Check challenge steps
+                    checkChallengeSteps(password);
+                    
+                    // Auto-generate suggestion if enabled
+                    const state = State.getState();
+                    if (state.settings.autoSuggest && password.length > 0) {
+                        generateNewSuggestion();
+                    }
+                }
+                
+                // Toggle password visibility
+                function togglePasswordVisibility() {
+                    const input = UIManager.elements.passwordInput;
+                    const button = UIManager.elements.toggleVisibility;
+                    
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                        button.textContent = '🙈';
+                    } else {
+                        input.type = 'password';
+                        button.textContent = '👁️';
+                    }
+                }
+                
+                // Use suggested passphrase
+                function useSuggestion() {
+                    const suggestion = UIManager.elements.suggestionText.textContent;
+                    UIManager.elements.passwordInput.value = suggestion;
+                    handlePasswordInput({ target: UIManager.elements.passwordInput });
+                    
+                    // Mark challenge step 5 as completed
+                    State.updateChallenge(4, true);
+                    UIManager.generateChallengeSteps();
+                    
+                    UIManager.showNotification('Passphrase applied! Test its strength.', 'success');
+                }
+                
+                // Generate new suggestion
+                function generateNewSuggestion() {
+                    const state = State.getState();
+                    const suggestion = PhraseGenerator.generatePassphrase(
+                        state.settings.wordCount,
+                        state.settings.separator
+                    );
+                    UIManager.updateSuggestion(suggestion);
+                }
+                
+                // Copy recipe to clipboard
+                function copyRecipe() {
+                    const recipe = UIManager.elements.recipeText.textContent;
+                    navigator.clipboard.writeText(recipe)
+                        .then(() => {
+                            UIManager.showNotification('Recipe copied to clipboard!', 'success');
+                        })
+                        .catch(err => {
+                            UIManager.showNotification('Failed to copy recipe', 'error');
+                        });
+                }
+                
+                // Switch tabs
+                function switchTab(event) {
+                    const tabId = event.target.dataset.tab;
+                    
+                    // Update tab classes
+                    UIManager.elements.tabs.forEach(tab => {
+                        tab.classList.toggle('active', tab.dataset.tab === tabId);
+                    });
+                    
+                    // Update content visibility
+                    UIManager.elements.tabContents.forEach(content => {
+                        content.classList.toggle('active', content.id === tabId);
+                    });
+                }
+                
+                // Handle theme selection
+                function handleThemeSelection(event) {
+                    const themeOption = event.target.closest('.theme-option');
+                    if (themeOption) {
+                        const themeId = themeOption.dataset.theme;
+                        State.updateSettings({ theme: themeId });
+                        UIManager.applyTheme(themeId);
+                        UIManager.showNotification(`Theme changed to ${themeId}`, 'success');
+                    }
+                }
+                
+                // Toggle boolean settings
+                function toggleSetting(settingName) {
+                    const state = State.getState();
+                    const newValue = !state.settings[settingName];
+                    State.updateSettings({ [settingName]: newValue });
+                    UIManager.updateSettingsDisplay();
+                    
+                    // Special handling for hash visualization
+                    if (settingName === 'showHashVisual' && newValue) {
+                        const password = state.password;
+                        Utils.generateHashVisual(password, UIManager.elements.hashVisualization);
+                    }
+                }
+                
+                // Handle crack time preset change
+                function handleCrackTimePresetChange(event) {
+                    State.updateSettings({ crackTimePreset: event.target.value });
+                    // Recalculate with new preset
+                    const password = State.getState().password;
+                    if (password) {
+                        const entropy = Utils.calculateEntropy(password);
+                        const patterns = Utils.detectPatterns(password);
+                        const crackTime = Utils.estimateCrackTime(entropy, patterns);
+                        UIManager.updateCrackTime(crackTime);
+                    }
+                }
+                
+                // Handle word count change
+                function handleWordCountChange(event) {
+                    State.updateSettings({ wordCount: parseInt(event.target.value) });
+                    generateNewSuggestion();
+                }
+                
+                // Handle separator change
+                function handleSeparatorChange(event) {
+                    State.updateSettings({ separator: event.target.value });
+                    generateNewSuggestion();
+                }
+                
+                // Save settings
+                function saveSettings() {
+                    State.saveState();
+                    UIManager.showNotification('Settings saved!', 'success');
+                }
+                
+                // Check challenge steps
+                function checkChallengeSteps(password) {
+                    const state = State.getState();
+                    const challenge = state.challenge;
+                    
+                    // Step 1: Length >= 12
+                    if (!challenge.completed[0] && password.length >= 12) {
+                        State.updateChallenge(0, true);
+                        UIManager.generateChallengeSteps();
+                    }
+                    
+                    // Step 2: 3+ character types
+                    if (!challenge.completed[1]) {
+                        const types = [
+                            /[a-z]/.test(password),
+                            /[A-Z]/.test(password),
+                            /\d/.test(password),
+                            /[^a-zA-Z0-9]/.test(password)
+                        ];
+                        if (types.filter(Boolean).length >= 3) {
+                            State.updateChallenge(1, true);
+                            UIManager.generateChallengeSteps();
+                        }
+                    }
+                    
+                    // Step 3: No patterns
+                    if (!challenge.completed[2]) {
+                        const patterns = Utils.detectPatterns(password);
+                        if (patterns.length === 0 && password.length > 0) {
+                            State.updateChallenge(2, true);
+                            UIManager.generateChallengeSteps();
+                        }
+                    }
+                    
+                    // Step 4: 80+ entropy
+                    if (!challenge.completed[3]) {
+                        const entropy = Utils.calculateEntropy(password);
+                        if (entropy >= 80) {
+                            State.updateChallenge(3, true);
+                            UIManager.generateChallengeSteps();
+                        }
+                    }
+                }
+                
+                // Reset challenge
+                function resetChallenge() {
+                    State.resetChallenge();
+                    UIManager.generateChallengeSteps();
+                    UIManager.showNotification('Challenge reset!', 'success');
+                }
+                
+                // Export settings
+                function exportSettings() {
+                    const data = Utils.exportState();
+                    const blob = new Blob([data], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `chronos-settings-${new Date().toISOString().slice(0, 10)}.json`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    
+                    UIManager.showNotification('Settings exported!', 'success');
+                }
+                
+                // Trigger import file dialog
+                function triggerImport() {
+                    UIManager.elements.importFile.click();
+                }
+                
+                // Handle file import
+                function handleFileImport(event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const success = Utils.importState(e.target.result);
+                        if (success) {
+                            // Update UI with new settings
+                            const state = State.getState();
+                            UIManager.applyTheme(state.settings.theme);
+                            UIManager.updateSettingsDisplay();
+                            UIManager.generateThemeSelector();
+                            UIManager.generateChallengeSteps();
+                            UIManager.showNotification('Settings imported successfully!', 'success');
+                        } else {
+                            UIManager.showNotification('Failed to import settings. Invalid file.', 'error');
+                        }
+                    };
+                    reader.readAsText(file);
+                    
+                    // Reset file input
+                    event.target.value = '';
+                }
+                
+                // Reset to defaults
+                function resetToDefaults() {
+                    if (confirm('Are you sure you want to reset all settings to defaults? This cannot be undone.')) {
+                        localStorage.removeItem('chronosState');
+                        location.reload();
+                    }
+                }
+                
+                return {
+                    init
+                };
+            })();
+            
+            // ===== APPLICATION INITIALIZATION =====
+            document.addEventListener('DOMContentLoaded', function() {
+                // Initialize all modules
+                UIManager.init();
+                EventHandlers.init();
+                
+                // Apply saved theme
+                const state = State.getState();
+                UIManager.applyTheme(state.settings.theme);
+                
+                console.log('🛡️ Chronos Password Tester initialized successfully!');
+                console.log('🔒 All calculations run locally in your browser.');
+                console.log('📖 Check the User Guide tab for instructions.');
+            });
+            
+        })();
+    </script>
+</body>
+</html>
